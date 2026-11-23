@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2a2521">
+<meta name="description" content="1手ごとに解説が出る、初心者向けの囲碁アプリ。NPC・友達と対局できます。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>はじめての囲碁</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f5f0e6; --ink:#2a2521; --muted:#7a6f63; --line:#e3d9c8; --card:#fffdf8;
+  --wood1:#e6c587; --wood2:#d4a85f; --grid:#5a4426;
+  --great:#1f6b4a; --good:#3f8a5f; --ok:#b07a1a; --bad:#b33a2e; --accent:#2f5d8a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",system-ui,sans-serif;line-height:1.6}
+header{max-width:1120px;margin:0 auto;padding:22px 20px 6px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+h1{font-size:26px;margin:0;letter-spacing:.06em}
+header p{margin:0;color:var(--muted);font-size:14px}
+main{max-width:1120px;margin:0 auto;padding:10px 20px 40px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:22px;align-items:start}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.board-wrap{position:sticky;top:10px}
+@media (max-width:860px){.board-wrap{position:static}}
+.status{font-weight:700;font-size:15px;min-height:26px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid #0004}
+.dot.b{background:#222}.dot.w{background:#fff}
+#board{width:100%;max-width:640px;display:block;border-radius:10px;box-shadow:0 6px 22px #5a442633,0 1px 0 #fff8 inset;touch-action:manipulation;cursor:pointer;user-select:none}
+.board-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;max-width:640px}
+button{font:inherit;font-weight:700;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);padding:8px 16px;border-radius:999px;cursor:pointer;transition:transform .08s,background .15s}
+button:hover{background:#fff}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--ink);color:#fff}
+button.danger{border-color:var(--bad);color:var(--bad)}
+button:disabled{opacity:.4;cursor:default}
+.caps{margin-top:10px;color:var(--muted);font-size:13px;max-width:640px}
+aside{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card h3{margin:0 0 8px;font-size:15px;letter-spacing:.04em}
+.settings .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.settings label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+select{font:inherit;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:#fff}
+.feedback{border-width:2px;min-height:160px}
+.fb-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.badge{font-weight:700;padding:3px 12px;border-radius:999px;color:#fff;font-size:15px}
+.r0{background:var(--great)}.r1{background:var(--good)}.r2{background:var(--ok)}.r3{background:var(--bad)}.rn{background:var(--muted)}
+.fb-mv{color:var(--muted);font-size:14px}
+ul.reasons{margin:6px 0;padding-left:0;list-style:none}
+ul.reasons li{padding:3px 0 3px 22px;position:relative;font-size:14.5px}
+ul.reasons li::before{position:absolute;left:0;top:3px;font-weight:700}
+li.pos::before{content:"＋";color:var(--good)}
+li.neg::before{content:"－";color:var(--bad)}
+li.info::before{content:"・";color:var(--muted)}
+.better{background:#eef5ef;border-radius:10px;padding:8px 10px;margin:8px 0 0;font-size:14px}
+.npc{border-top:1px dashed var(--line);margin-top:10px;padding-top:8px;font-size:14px}
+.npc b{color:var(--accent)}
+.situ p{margin:4px 0;font-size:14px}
+.warn{color:var(--bad);font-weight:700}
+.chance{color:var(--great);font-weight:700}
+.meter{height:10px;border-radius:6px;background:#fff;border:1px solid #0003;overflow:hidden;display:flex;margin:6px 0 2px}
+.meter i{display:block;height:100%;background:#2a2521;transition:width .4s}
+.meter-l{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+details.rules summary{cursor:pointer;font-weight:700;font-size:15px}
+details.rules ol{padding-left:20px;margin:8px 0 0;font-size:14px}
+details.rules li{margin-bottom:6px}
+.log ol{margin:0;padding-left:0;list-style:none;max-height:150px;overflow:auto;font-size:13.5px}
+.log li{padding:3px 0;border-bottom:1px solid var(--line);display:flex;gap:8px}
+.log li span.n{color:var(--muted);width:30px;flex:none;text-align:right}
+.stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
+.stats span{padding:2px 9px;border-radius:999px;color:#fff}
+.result{font-size:18px;font-weight:700;margin:4px 0}
+.legend{display:flex;gap:14px;align-items:center;font-size:13px;color:var(--muted);margin-top:8px;max-width:640px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;border:1px solid #0005;margin-right:4px;vertical-align:-1px}
+button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.small{font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>はじめての囲碁</h1>
+  <p>1手打つごとに「いい手だったか」「なぜか」を解説します。</p>
+</header>
+<main>
+  <section class="board-wrap">
+    <div class="status" id="status"></div>
+    <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="board-btns" id="btns"></div>
+    <div class="legend" id="legend"></div>
+    <div class="caps" id="caps"></div>
+  </section>
+  <aside>
+    <div class="card log">
+      <h3>ふりかえり</h3>
+      <div class="stats" id="stats"></div>
+      <ol id="log"></ol>
+    </div>
+    <div class="card feedback" id="feedback"></div>
+    <div class="card situ" id="situ"></div>
+    <details class="card rules">
+      <summary>囲碁の基本ルール（はじめての方へ）</summary>
+      <ol>
+        <li><b>交互に打つ</b>：黒と白が1手ずつ、線の交わる点に石を置きます。</li>
+        <li><b>呼吸点（こきゅうてん）</b>：石のとなり（上下左右）の空いている点のこと。つながった石は呼吸点を共有します。</li>
+        <li><b>アタリ</b>：呼吸点が残り1つの状態。次に相手に打たれると取られます。</li>
+        <li><b>石を取る</b>：相手の石の呼吸点をすべてふさぐと、その石を取れます。</li>
+        <li><b>着手禁止点</b>：自分の石の呼吸点がなくなる場所には打てません（相手の石を取れる場合は打てます）。</li>
+        <li><b>コウ</b>：1子を取り合う形では、取られた直後にすぐ取り返すことはできません。別の場所に1手打ってからにします。</li>
+        <li><b>勝ち負け</b>：両者がパスしたら終局。「自分の石の数＋囲んだ空き点（地）」が多い方の勝ち。後手の白には6.5目のハンデ（コミ）がつきます。</li>
+      </ol>
+      <p class="small">盤上の石にカーソルを合わせると、そのグループの呼吸点が青い点で表示されます。</p>
+    </details>
+    <div class="card settings">
+      <h3>対局の設定</h3>
+      <div class="row">
+        <label>対戦相手<select id="mode"><option value="npc" selected>NPC（コンピュータ）</option><option value="local">友達（同じ端末で交代）</option><option value="online">友達（オンライン）</option></select></label>
+        <label>盤の大きさ<select id="size"><option value="9" selected>9路（入門におすすめ）</option><option value="13">13路</option></select></label>
+        <label id="colorwrap">あなたの石<select id="color"><option value="1" selected>黒（先手）</option><option value="2">白（後手）</option></select></label>
+        <label id="levelwrap">NPCの強さ<select id="level"><option value="0">入門</option><option value="1" selected>初級</option><option value="2">中級</option><option value="3">上級（試し打ち）</option></select></label>
+      </div>
+      <div class="row" id="onlinerow">
+        <label>合言葉（英数字）<input id="code" maxlength="20" autocomplete="off" style="font:inherit;padding:5px 8px;border-radius:8px;border:1px solid var(--line);width:140px"></label>
+        <p class="small" id="onlinenote" style="margin:0;flex:1 1 200px"></p>
+        <button id="copyinvite" type="button" style="padding:5px 12px;font-size:13px">招待リンクをコピー</button>
+        <p class="small" id="onlinemsg" style="margin:0;width:100%"></p>
+      </div>
+      <div class="row"><button class="primary" id="newgame">新しい対局をはじめる</button><button id="leave" style="display:none">部屋を出る</button></div>
+    </div>
+  </aside>
+</main>
+<script src="peerjs.min.js"></script>
+<script type="text/plain" id="mcsrc">
+// ===== 試し打ち（モンテカルロ）エンジン：Web Worker で動く =====
+function makeEngine(N) {
+  const W = N + 2, SZ = W * W;
+  const color = new Uint8Array(SZ), head = new Int32Array(SZ), nxt = new Int32Array(SZ), size = new Int32Array(SZ);
+  const plib = new Int32Array(SZ), lsum = new Float64Array(SZ), lsq = new Float64Array(SZ);
+  const emp = new Int32Array(N * N), empIdx = new Int32Array(SZ);
+  const DIRS = [1, -1, W, -W], DIAG = [W + 1, W - 1, -W + 1, -W - 1];
+  const pts = [];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) pts.push((y + 1) * W + x + 1);
+  let ne = 0, ko = 0;
+  let seed = (Math.random() * 2 ** 31) | 1;
+  function rnd(n) { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return ((seed >>> 0) % n); }
+
+  function clear() {
+    color.fill(3); ne = 0; ko = 0;
+    for (const p of pts) { color[p] = 0; empIdx[p] = ne; emp[ne++] = p; }
+  }
+  function addEmpty(p) { empIdx[p] = ne; emp[ne++] = p; }
+  function rmEmpty(p) { const k = empIdx[p], l = emp[--ne]; emp[k] = l; empIdx[l] = k; }
+  function addLib(h, l) { plib[h]++; lsum[h] += l; lsq[h] += l * l; }
+  function rmLib(h, l) { plib[h]--; lsum[h] -= l; lsq[h] -= l * l; }
+  function inAtari(h) { return plib[h] > 0 && plib[h] * lsq[h] === lsum[h] * lsum[h]; }
+  function atariLib(h) { return lsum[h] / plib[h]; }
+
+  function legal(p, c) {
+    if (color[p] !== 0 || p === ko) return false;
+    for (let k = 0; k < 4; k++) {
+      const q = p + DIRS[k], cq = color[q];
+      if (cq === 0) return true;
+      if (cq === 3) continue;
+      const h = head[q];
+      if (cq === c) { if (!inAtari(h)) return true; }
+      else if (inAtari(h)) return true;
+    }
+    return false;
+  }
+  function merge(a, b) {
+    if (size[a] < size[b]) { const t = a; a = b; b = t; }
+    let s = b; do { head[s] = a; s = nxt[s]; } while (s !== b);
+    const t = nxt[a]; nxt[a] = nxt[b]; nxt[b] = t;
+    size[a] += size[b]; plib[a] += plib[b]; lsum[a] += lsum[b]; lsq[a] += lsq[b];
+  }
+  function remove(h) {
+    let s = h; do { color[s] = 0; addEmpty(s); s = nxt[s]; } while (s !== h);
+    s = h; do {
+      for (let k = 0; k < 4; k++) { const q = s + DIRS[k], cq = color[q]; if (cq === 1 || cq === 2) addLib(head[q], s); }
+      s = nxt[s];
+    } while (s !== h);
+  }
+  function play(p, c) {
+    const o = 3 - c;
+    rmEmpty(p); color[p] = c; head[p] = p; nxt[p] = p; size[p] = 1; plib[p] = 0; lsum[p] = 0; lsq[p] = 0;
+    for (let k = 0; k < 4; k++) { const q = p + DIRS[k]; if (color[q] === 0) addLib(p, q); }
+    for (let k = 0; k < 4; k++) { const q = p + DIRS[k], cq = color[q]; if (cq === 1 || cq === 2) rmLib(head[q], p); }
+    for (let k = 0; k < 4; k++) { const q = p + DIRS[k]; if (color[q] === c && head[q] !== head[p]) merge(head[p], head[q]); }
+    let cap = 0, capPos = 0;
+    for (let k = 0; k < 4; k++) {
+      const q = p + DIRS[k];
+      if (color[q] === o && plib[head[q]] === 0) { cap += size[head[q]]; capPos = q; remove(head[q]); }
+    }
+    const hp = head[p];
+    ko = (cap === 1 && size[hp] === 1 && inAtari(hp)) ? capPos : 0;
+  }
+  function eyeish(p, c) {
+    for (let k = 0; k < 4; k++) { const cq = color[p + DIRS[k]]; if (cq !== c && cq !== 3) return false; }
+    let bad = 0, edge = 0;
+    for (let k = 0; k < 4; k++) { const cq = color[p + DIAG[k]]; if (cq === 3) edge = 1; else if (cq === 3 - c) bad++; }
+    return bad + edge < 2;
+  }
+  // 打つと自分からアタリになる手か（取れる場合は除く）
+  const mark = new Int32Array(SZ); let stamp = 1;
+  function selfAtari(p, c) {
+    let libs = 0; stamp++;
+    for (let k = 0; k < 4; k++) {
+      const q = p + DIRS[k], cq = color[q];
+      if (cq === 0) { if (mark[q] !== stamp) { mark[q] = stamp; if (++libs >= 2) return false; } }
+      else if (cq === 3 - c && inAtari(head[q])) return false;
+    }
+    mark[p] = stamp;
+    for (let k = 0; k < 4; k++) {
+      const q = p + DIRS[k];
+      if (color[q] !== c) continue;
+      const h = head[q];
+      let s = h;
+      do {
+        for (let d = 0; d < 4; d++) {
+          const l = s + DIRS[d];
+          if (color[l] === 0 && mark[l] !== stamp) { mark[l] = stamp; if (++libs >= 2) return false; }
+        }
+        s = nxt[s];
+      } while (s !== h);
+    }
+    return true;
+  }
+  function select(c, last) {
+    if (last) {
+      // 直前の手への応手：アタリの石を取る・逃げる
+      if (color[last] === 3 - c && inAtari(head[last])) { const L = atariLib(head[last]); if (legal(L, c)) return L; }
+      for (let k = 0; k < 4; k++) {
+        const q = last + DIRS[k];
+        if (color[q] === c && inAtari(head[q])) {
+          // 逃げる：逃げても1呼吸点なら、まわりの相手のアタリの石を取って助かる手を探す
+          const h = head[q];
+          let s = h;
+          do {
+            for (let d = 0; d < 4; d++) { const e = s + DIRS[d]; if (color[e] === 3 - c && inAtari(head[e])) { const L = atariLib(head[e]); if (legal(L, c)) return L; } }
+            s = nxt[s];
+          } while (s !== h);
+          const L = atariLib(h);
+          if (legal(L, c) && !selfAtari(L, c)) return L;
+        }
+      }
+    }
+    let n = ne;
+    while (n > 0) {
+      const k = rnd(n), p = emp[k];
+      if (!eyeish(p, c) && legal(p, c) && (!selfAtari(p, c) || rnd(10) === 0)) return p;
+      n--;
+      const l = emp[n]; emp[k] = l; empIdx[l] = k; emp[n] = p; empIdx[p] = n;
+    }
+    return 0;
+  }
+  function score(komi) {
+    let s = 0;
+    for (const p of pts) {
+      const c = color[p];
+      if (c === 1) s++; else if (c === 2) s--;
+      else {
+        let b = 0, w = 0;
+        for (let k = 0; k < 4; k++) { const cq = color[p + DIRS[k]]; if (cq === 1) b = 1; else if (cq === 2) w = 1; }
+        if (b && !w) s++; else if (w && !b) s--;
+      }
+    }
+    return s - komi;
+  }
+  function playout(c, last, komi, own) {
+    let passes = 0, moves = 0;
+    const lim = N * N * 3;
+    while (passes < 2 && moves < lim) {
+      const p = select(c, last);
+      if (p) { play(p, c); passes = 0; last = p; } else { passes++; last = 0; ko = 0; }
+      c = 3 - c; moves++;
+    }
+    if (own) for (let k = 0; k < pts.length; k++) {
+      const p = pts[k], cc = color[p];
+      if (cc === 1) own[k]++; else if (cc === 2) own[k]--;
+      else { let b = 0, w = 0; for (let d = 0; d < 4; d++) { const cq = color[p + DIRS[d]]; if (cq === 1) b = 1; else if (cq === 2) w = 1; } if (b && !w) own[k]++; else if (w && !b) own[k]--; }
+    }
+    return score(komi);
+  }
+  const arrs = [color, head, nxt, size, plib, lsum, lsq, emp, empIdx];
+  function save() { return { a: arrs.map(x => x.slice()), ne, ko }; }
+  function restore(s) { for (let k = 0; k < arrs.length; k++) arrs[k].set(s.a[k]); ne = s.ne; ko = s.ko; }
+  function load(board, koIdx) {
+    clear();
+    for (let i = 0; i < N * N; i++) if (board[i]) play(pts[i], board[i]);
+    ko = koIdx >= 0 ? pts[koIdx] : 0;
+  }
+  return { pts, load, save, restore, legal, play, playout, setKo: k => { ko = k; } };
+}
+
+// 候補手ごとに試し打ちして、平均の目数差と勝率を出す
+function mcAnalyze(job) {
+  const { N, board, toMove, ko, last, cands, budget, komi } = job;
+  const E = makeEngine(N);
+  E.load(board, ko);
+  const root = E.save();
+  const P = i => E.pts[i];
+  const st = cands.map(i => ({ i, n: 0, sum: 0, sq: 0, wins: 0, ok: true }));
+  const own = job.ownership ? new Float64Array(N * N) : null;
+  const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+  const t0 = now();
+  const keep = new Set(job.keep || []);
+  let rounds = 0, phase = 0;
+  const runOne = s => {
+    for (let k = 0; k < 16; k++) {
+      E.restore(root);
+      let sc;
+      if (s.i < 0) { E.setKo(0); sc = E.playout(3 - toMove, 0, komi, own); }
+      else {
+        const p = P(s.i);
+        if (!E.legal(p, toMove)) { s.ok = false; return; }
+        E.play(p, toMove);
+        sc = E.playout(3 - toMove, p, komi, own);
+      }
+      const m = toMove === 1 ? sc : -sc;
+      s.n++; s.sum += m; s.sq += m * m; if (m > 0) s.wins++;
+    }
+  };
+  // 段階的に候補を絞る：前半は全候補、後半は上位と「必ず比べたい手」に集中
+  while ((now() - t0 < budget || rounds < 4) && rounds < 6000) {
+    const el = now() - t0;
+    if (phase === 0 && el > budget * 0.4 && rounds >= 4) {
+      phase = 1;
+      const live = st.filter(s => s.ok && s.n).sort((a, b) => b.sum / b.n - a.sum / a.n);
+      live.forEach((s, k) => { if (k >= Math.max(3, Math.ceil(live.length / 2)) && !keep.has(s.i)) s.active = false; });
+    } else if (phase === 1 && el > budget * 0.75) {
+      phase = 2;
+      const live = st.filter(s => s.ok && s.n && s.active !== false).sort((a, b) => b.sum / b.n - a.sum / a.n);
+      live.forEach((s, k) => { if (k >= 3 && !keep.has(s.i)) s.active = false; });
+    }
+    for (const s of st) if (s.ok && s.active !== false) runOne(s);
+    rounds++;
+  }
+  const res = st.filter(s => s.ok && s.n).map(s => ({ i: s.i, n: s.n, mean: s.sum / s.n, win: s.wins / s.n, se: Math.sqrt(Math.max(0, s.sq / s.n - (s.sum / s.n) ** 2) / s.n) }));
+  let total = 0; for (const s of st) total += s.n;
+  return { res, ms: now() - t0, total, own: own ? Array.from(own, v => v / total) : null };
+}
+
+if (typeof self !== "undefined" && typeof window === "undefined") {
+  self.onmessage = e => { const r = mcAnalyze(e.data); self.postMessage({ id: e.data.id, ...r }); };
+}
+
+</script>
+<script>
+// ===== 囲碁エンジン（ルール・評価・NPC） =====
+const COLS = "ABCDEFGHJKLMNOPQRST";
+let N = 9, NB = [];
+
+function setup(n) {
+  N = n; NB = [];
+  for (let i = 0; i < N * N; i++) {
+    const x = i % N, y = (i / N) | 0, a = [];
+    if (x > 0) a.push(i - 1);
+    if (x < N - 1) a.push(i + 1);
+    if (y > 0) a.push(i - N);
+    if (y < N - 1) a.push(i + N);
+    NB.push(a);
+  }
+}
+
+function coord(i) { return COLS[i % N] + (N - ((i / N) | 0)); }
+
+function getGroup(b, i) {
+  const c = b[i], stones = [i], libs = new Set(), seen = new Uint8Array(N * N);
+  seen[i] = 1;
+  for (let k = 0; k < stones.length; k++) {
+    for (const j of NB[stones[k]]) {
+      if (b[j] === 0) libs.add(j);
+      else if (b[j] === c && !seen[j]) { seen[j] = 1; stones.push(j); }
+    }
+  }
+  return { stones, libs };
+}
+
+function allGroups(b) {
+  const seen = new Uint8Array(N * N), out = [];
+  for (let i = 0; i < N * N; i++) {
+    if (!b[i] || seen[i]) continue;
+    const g = getGroup(b, i);
+    for (const s of g.stones) seen[s] = 1;
+    g.color = b[i];
+    out.push(g);
+  }
+  return out;
+}
+
+// 着手。違法なら {err}
+function play(b, i, c, ko) {
+  if (b[i] !== 0) return { err: "occupied" };
+  if (i === ko) return { err: "ko" };
+  const nb = b.slice(); nb[i] = c;
+  const o = 3 - c, captured = [];
+  for (const j of NB[i]) {
+    if (nb[j] === o) {
+      const g = getGroup(nb, j);
+      if (g.libs.size === 0) for (const s of g.stones) { nb[s] = 0; captured.push(s); }
+    }
+  }
+  const g = getGroup(nb, i);
+  if (g.libs.size === 0) return { err: "suicide" };
+  let nko = -1;
+  if (captured.length === 1 && g.stones.length === 1 && g.libs.size === 1) nko = captured[0];
+  return { b: nb, captured, ko: nko, group: g };
+}
+
+// 勢力推定：黒+ / 白-
+function estimate(b) {
+  const inf = new Float32Array(N * N);
+  for (let i = 0; i < N * N; i++) {
+    if (!b[i]) continue;
+    const s = b[i] === 1 ? 1 : -1, x = i % N, y = (i / N) | 0;
+    for (let dy = -3; dy <= 3; dy++) {
+      const yy = y + dy; if (yy < 0 || yy >= N) continue;
+      const r = 3 - Math.abs(dy);
+      for (let dx = -r; dx <= r; dx++) {
+        const xx = x + dx; if (xx < 0 || xx >= N) continue;
+        inf[yy * N + xx] += s * (4 - Math.abs(dx) - Math.abs(dy));
+      }
+    }
+  }
+  let sc = 0;
+  for (let i = 0; i < N * N; i++) {
+    if (b[i] === 1) sc++; else if (b[i] === 2) sc--;
+    else if (inf[i] >= 2) sc++; else if (inf[i] <= -2) sc--;
+  }
+  return { sc, inf };
+}
+
+function stoneCount(b) { let n = 0; for (let i = 0; i < b.length; i++) if (b[i]) n++; return n; }
+
+
+// ===== シチョウ（征）などの読み =====
+// 攻め手番：石 s のグループを取れるか
+function canCapture(b, s, att, ko, depth) {
+  const g = getGroup(b, s), L = [...g.libs];
+  if (L.length === 1) return !play(b, L[0], att, ko).err;
+  if (L.length > 2 || depth <= 0) return false;
+  for (const a of L) {
+    const r = play(b, a, att, ko);
+    if (r.err) continue;
+    if (r.b[s] === 0) return true;
+    if (getGroup(r.b, a).libs.size === 1 && getGroup(r.b, s).libs.size > 1) continue; // 攻めた石がすぐ取られる
+    if (defenderDead(r.b, s, att, r.ko, depth - 1)) return true;
+  }
+  return false;
+}
+// 守り手番：石 s のグループが逃げられないか
+function defenderDead(b, s, att, ko, depth) {
+  const def = b[s], g = getGroup(b, s);
+  if (g.libs.size >= 3) return false;
+  const opts = new Set(g.libs);
+  for (const st of g.stones) for (const j of NB[st]) if (b[j] === att) {
+    const ag = getGroup(b, j);
+    if (ag.libs.size === 1) opts.add([...ag.libs][0]);
+  }
+  for (const o of opts) {
+    const r = play(b, o, def, ko);
+    if (r.err) continue;
+    const n = getGroup(r.b, s).libs.size;
+    if (n >= 3) return false;
+    if (n === 2 && !canCapture(r.b, s, att, r.ko, depth)) return false;
+  }
+  return true;
+}
+
+// 色cの全合法手を評価
+function analyzeMoves(b, c, ko) {
+  const o = 3 - c, sign = c === 1 ? 1 : -1;
+  const E0 = estimate(b), base = E0.sc * sign;
+  const ownAtari = [], oppAtari = [];
+  for (const g of allGroups(b)) {
+    if (g.libs.size === 1) (g.color === c ? ownAtari : oppAtari).push({ stones: g.stones, lib: [...g.libs][0] });
+  }
+  const stones = stoneCount(b), opening = stones < N * 1.2;
+  const moves = [];
+  for (let i = 0; i < N * N; i++) {
+    if (b[i]) continue;
+    const r = play(b, i, c, ko);
+    if (r.err) continue;
+    let score = 0; const tags = [];
+    const nCap = r.captured.length, libs = r.group.libs.size, gsize = r.group.stones.length;
+    if (nCap) { score += 8 + 5 * nCap; tags.push({ k: "capture", n: nCap }); }
+    // アタリの石を助けたか
+    let saved = 0;
+    for (const g of ownAtari) {
+      if (r.b[g.stones[0]] !== c) continue;
+      if (getGroup(r.b, g.stones[0]).libs.size >= 2) saved += g.stones.length;
+    }
+    let ladderDead = false;
+    if (libs === 2 && !nCap && (saved || gsize >= 2)) ladderDead = canCapture(r.b, i, o, r.ko, 30);
+    if (saved && ladderDead) { score -= 4 + 2 * gsize; tags.push({ k: "ladderdead", n: gsize }); }
+    else if (saved) { score += (libs >= 3 || nCap ? 10 : 6) + 3 * saved; tags.push({ k: "save", n: saved, weak: libs === 2 && !nCap }); }
+    if (libs === 1 && nCap === 0) { score -= 10 + 3 * gsize; tags.push({ k: "selfatari" }); }
+    else if (ladderDead && !saved) { score -= 3 + 2 * gsize; tags.push({ k: "ladderrisk" }); }
+    else if (libs === 2 && nCap === 0 && gsize >= 2 && !saved) { score -= 1.5; tags.push({ k: "lowlibs" }); }
+    // 相手をアタリに
+    let atariN = 0, caught = 0; const checked = new Set();
+    for (const j of NB[i]) {
+      if (r.b[j] !== o || checked.has(j)) continue;
+      const g = getGroup(r.b, j); g.stones.forEach(s => checked.add(s));
+      if (g.libs.size === 1) {
+        atariN = Math.max(atariN, g.stones.length);
+        if (libs >= 2 && defenderDead(r.b, j, c, r.ko, 30)) caught = Math.max(caught, g.stones.length);
+      } else if (g.libs.size === 2 && libs >= 2 && g.stones.length >= 2 && canCapture(r.b, j, c, r.ko, 30) && !canCapture(b, j, c, ko, 30)) {
+        caught = Math.max(caught, g.stones.length); // ゲタ・シチョウの形に追い込んだ
+      }
+    }
+    if (caught) { score += 5 + 3 * caught; tags.push({ k: "caught", n: caught }); }
+    else if (atariN && libs >= 2) { score += 2 + 1.5 * atariN; tags.push({ k: "atari", n: atariN }); }
+    // 自分の目をつぶす
+    if (nCap === 0 && NB[i].every(j => b[j] === c)) { score -= 12; tags.push({ k: "eyefill" }); }
+    // 位置（序盤）
+    const x = i % N, y = (i / N) | 0, line = Math.min(x, y, N - 1 - x, N - 1 - y) + 1;
+    if (opening) {
+      if (line === 1) { score -= 5; tags.push({ k: "edge1" }); }
+      else if (line === 2) { score -= 2; tags.push({ k: "edge2" }); }
+      else if (line === 3 || line === 4) { score += 1.5; tags.push({ k: "goodline" }); }
+    } else if (line === 1 && !nCap && !saved && !atariN) score -= 0.5;
+    // 相手の勢力圏に深入り
+    if (!nCap && !saved && E0.inf[i] * sign <= -6 && gsize <= 2) { score -= 4; tags.push({ k: "deep" }); }
+    // 陣地の増減
+    const delta = estimate(r.b).sc * sign - base;
+    score += delta * 0.5;
+    if (delta >= 4) tags.push({ k: "territory" });
+    moves.push({ i, score, tags, libs });
+  }
+  moves.sort((a, b2) => b2.score - a.score);
+  return { moves, ownAtari, oppAtari };
+}
+
+// NPC の手選び。null ならパス
+function npcChoose(b, c, ko, level, opponentPassed, seen) {
+  const A = analyzeMoves(b, c, ko);
+  let ms = A.moves;
+  if (seen) ms = ms.filter(m => !seen.has(play(b, m.i, c, ko).b.join('')));
+  if (!ms.length) return null;
+  const late = stoneCount(b) > N * N * 0.35;
+  const passLine = opponentPassed ? 1.5 : 0.4;
+  if (late && ms[0].score < passLine) return null;
+  let pick;
+  if (level === 0) {
+    const pool = ms.filter(m => m.score > -5);
+    pick = (pool.length ? pool : ms).map(m => ({ m, s: m.score + Math.random() * 14 - 7 }))
+      .sort((a, b2) => b2.s - a.s)[0].m;
+  } else if (level === 1) {
+    pick = ms.slice(0, 10).map(m => ({ m, s: m.score + Math.random() * 3 - 1.5 }))
+      .sort((a, b2) => b2.s - a.s)[0].m;
+  } else {
+    const o = 3 - c;
+    pick = ms.slice(0, 8).map(m => {
+      const r = play(b, m.i, c, ko);
+      const rep = analyzeMoves(r.b, o, r.ko).moves[0];
+      return { m, s: m.score - 0.6 * (rep ? rep.score : 0) + Math.random() * 0.6 };
+    }).sort((a, b2) => b2.s - a.s)[0].m;
+  }
+  return pick;
+}
+
+// 終局：死に石の推定（目の数＋勢力で判断。小さい石から順に。ユーザーが修正できる）
+function regionInfo(b) {
+  const regionOf = new Int32Array(N * N).fill(-1), regions = [];
+  for (let i = 0; i < N * N; i++) {
+    if (b[i] || regionOf[i] >= 0) continue;
+    const id = regions.length, pts = [i], border = new Set(); regionOf[i] = id;
+    for (let k = 0; k < pts.length; k++) for (const j of NB[pts[k]]) {
+      if (b[j]) border.add(b[j]);
+      else if (regionOf[j] < 0) { regionOf[j] = id; pts.push(j); }
+    }
+    regions.push({ size: pts.length, owner: border.size === 1 ? [...border][0] : 0 });
+  }
+  return { regionOf, regions };
+}
+function guessDead(b) {
+  const dead = new Set();
+  const groups = allGroups(b).sort((a, c) => a.stones.length - c.stones.length);
+  for (let pass = 0; pass < 2; pass++) for (const g of groups) {
+    if (dead.has(g.stones[0])) continue;
+    const cur = b.slice(); for (const s of dead) cur[s] = 0;
+    const { regionOf, regions } = regionInfo(cur);
+    const ids = new Set();
+    for (const s of g.stones) for (const j of NB[s]) if (!cur[j] && regions[regionOf[j]].owner === g.color) ids.add(regionOf[j]);
+    let total = 0; for (const id of ids) total += regions[id].size;
+    if (ids.size >= 2 || total >= 3) continue;
+    const sign = g.color === 1 ? 1 : -1;
+    for (const s of g.stones) cur[s] = 0;
+    const { inf } = estimate(cur);
+    let sum = 0; for (const s of g.stones) sum += inf[s] * sign;
+    if (sum <= -2 * g.stones.length || (g.libs.size === 1 && sum < 0)) g.stones.forEach(s => dead.add(s));
+  }
+  return dead;
+}
+
+// 中国ルール式の数え方（石＋地）
+function computeScore(b, dead) {
+  const nb = b.slice(); for (const s of dead) nb[s] = 0;
+  const owner = new Int8Array(N * N), seen = new Uint8Array(N * N);
+  let black = 0, white = 0;
+  for (let i = 0; i < N * N; i++) {
+    if (nb[i] === 1) { black++; owner[i] = 1; }
+    else if (nb[i] === 2) { white++; owner[i] = 2; }
+  }
+  for (let i = 0; i < N * N; i++) {
+    if (nb[i] || seen[i]) continue;
+    const region = [i], border = new Set(); seen[i] = 1;
+    for (let k = 0; k < region.length; k++) for (const j of NB[region[k]]) {
+      if (nb[j]) border.add(nb[j]);
+      else if (!seen[j]) { seen[j] = 1; region.push(j); }
+    }
+    if (border.size === 1) {
+      const c = [...border][0];
+      for (const p of region) owner[p] = c;
+      if (c === 1) black += region.length; else white += region.length;
+    }
+  }
+  return { black, white, owner };
+}
+
+
+// ===== 画面 =====
+const $ = id => document.getElementById(id);
+const CELL = 40, PAD = 36;
+const NAME = { 1: "黒", 2: "白" };
+const RATE = [
+  { cls: "r0", label: "◎ 好手" },
+  { cls: "r1", label: "○ 良い手" },
+  { cls: "r2", label: "△ まずまず" },
+  { cls: "r3", label: "× 疑問手" },
+];
+const LEVELS = ["入門", "初級", "中級", "上級"];
+// mode: "npc" | "local"（同じ端末で友達と） | "online"（それぞれの端末で）
+let S = null, player = 1, npc = 2, level = 1, busy = false, showArea = false, mode = "npc";
+function toggleArea() { showArea = !showArea; render(); }
+
+// 打ち手の呼び名
+function who(c) {
+  if (mode === "local") return NAME[c];
+  if (mode === "online") return c === player ? "あなた" : "相手";
+  return c === player ? "あなた" : "NPC";
+}
+function canPlay() { return S && !S.over && !S.scoring && !busy && player && S.turn === player && !(mode === "online" && !ON.epoch); }
+
+function snapshot() {
+  return { b: S.b.slice(), ko: S.ko, caps: { ...S.caps }, last: S.last, passes: S.passes, moveNum: S.moveNum, turn: S.turn, seen: new Set(S.seen), stats: { 1: S.stats[1].slice(), 2: S.stats[2].slice() } };
+}
+
+function newGame() {
+  const m = $("mode").value;
+  if (m === "online") return joinOnline();
+  if (mode === "online") leaveOnline();
+  mode = m;
+  startGame(+$("size").value, +$("color").value);
+}
+
+function startGame(n, color) {
+  setup(n);
+  player = mode === "local" ? 1 : color; npc = 3 - color; level = +$("level").value;
+  S = {
+    b: new Int8Array(N * N), turn: 1, ko: -1, caps: { 1: 0, 2: 0 }, last: -1, passes: 0, moveNum: 0,
+    over: false, scoring: false, dead: new Set(), undo: [], suggest: -1, hints: [], hover: -1,
+    stats: { 1: [0, 0, 0, 0], 2: [0, 0, 0, 0] }, log: [], seen: new Set(), resignArm: false, result: null, final: false, lastMover: 0,
+  };
+  S.seen.add(S.b.join(""));
+  busy = false;
+  const head = mode === "npc" ? `${N}路盤・あなたは${NAME[color]}・NPC「${LEVELS[level]}」`
+    : mode === "local" ? `${N}路盤・友達と交代で打ちます（黒から）`
+    : `${N}路盤・オンライン対戦・あなたは${NAME[color]}`;
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">対局開始</span><span class="fb-mv">${head}</span></div>
+    <ul class="reasons">
+      <li class="info">${mode === "local" ? "どちらが打っても、" : "あなたが"}打つたびに、ここにその手の評価と理由が出ます。</li>
+      ${mode === "local" ? `<li class="info">1台の端末を交代で使って打ちます。いまの手番は盤の上に表示されます。</li>` : ""}
+      <li class="info">序盤は盤の<b>3線・4線</b>（端から3〜4本目）や中央付近が打ちやすい場所です。</li>
+      <li class="info">迷ったら「ヒント」で候補手を見られます。</li>
+    </ul>`;
+  render(); renderSitu(); renderLog();
+  if (mode === "npc" && S.turn === npc) npcTurn();
+}
+
+// ---------- 解説文 ----------
+function tagText(t, who) {
+  const you = who === "player";
+  switch (t.k) {
+    case "capture": return { c: "pos", t: you ? `相手の石を${t.n}子取りました！取った石の場所はあなたの陣地になりやすくなります。` : `あなたの石を${t.n}子取りました。` };
+    case "save": return { c: "pos", t: you ? `アタリだった石を助けました。${t.weak ? "ただし呼吸点はまだ2つ。油断は禁物です。" : "呼吸点が増えて安心です。"}` : "アタリになっていた石を逃げました。" };
+    case "selfatari": return { c: "neg", t: you ? "打った石の呼吸点が1つしかありません（自分からアタリ）。次に取られてしまいます。" : "NPCの石は自分からアタリになっています。取れるかも！" };
+    case "lowlibs": return { c: "neg", t: you ? "呼吸点が2つしかない形です。アタリをかけられやすいので注意。" : null };
+    case "atari": return { c: "pos", t: you ? `相手の石（${t.n}子）をアタリにしました！次に取れるかもしれません。` : `あなたの石（${t.n}子）をアタリにしてきました！逃げるかどうか考えましょう。` };
+    case "eyefill": return { c: "neg", t: you ? "自分の「目」を埋めてしまいました。目は石が生きるための大切な空間です。" : null };
+    case "edge1": return { c: "neg", t: you ? "序盤の1線（いちばん端）は陣地が増えにくく、効率が悪い場所です。" : null };
+    case "edge2": return { c: "neg", t: you ? "序盤の2線はやや低い位置。3線・4線が基本です。" : null };
+    case "goodline": return { c: "pos", t: you ? "序盤は3線・4線に打つのが基本。いい高さです。" : null };
+    case "deep": return { c: "neg", t: you ? "相手の勢力が強い場所です。この石は囲まれて取られやすいので注意。" : null };
+    case "ladderdead": return { c: "neg", t: you ? "逃げても呼吸点が2つのまま。シチョウ（階段状に追いかけられる形）で結局取られてしまいます。" : "NPCの石は逃げましたが、シチョウで取れる形です。" };
+    case "ladderrisk": return { c: "neg", t: you ? "この石はシチョウで取られる形です。相手に追いかけられると逃げきれません。" : null };
+    case "caught": return { c: "pos", t: you ? `相手の石（${t.n}子）はもう逃げられません（シチョウ・ゲタで取れる形）。` : `あなたの石（${t.n}子）を逃げられない形にしてきました。` };
+    case "territory": return { c: "pos", t: you ? "自分の陣地（地）を広げる手です。" : "陣地を広げてきました。" };
+  }
+  return null;
+}
+
+function bestReason(m) {
+  const pri = ["capture", "caught", "save", "atari", "territory", "goodline"];
+  for (const k of pri) {
+    const t = m.tags.find(x => x.k === k);
+    if (t) {
+      return {
+        capture: `相手の石を${t.n}子取れました`,
+        caught: `相手の石を逃げられない形にできました`,
+        save: "アタリの石を助けられました",
+        atari: "相手の石をアタリにできました",
+        territory: "陣地を大きく広げられました",
+        goodline: "序盤に大切な3線・4線の場所です",
+      }[k];
+    }
+  }
+  return "盤全体のバランスがよい場所です";
+}
+
+// 試し打ちが苦手な「読み」の結果を目数で補正する
+function tadj(m) {
+  if (!m || !m.tags) return 0;
+  let a = 0;
+  for (const t of m.tags) {
+    if (t.k === "caught") a += 2 * t.n + 2;
+    else if (t.k === "ladderdead") a -= 2 * t.n + 2;
+    else if (t.k === "ladderrisk") a -= 3;
+    else if (t.k === "selfatari") a -= 4;
+    else if (t.k === "eyefill") a -= 3;
+  }
+  return a;
+}
+// 試し打ちの結果に補正をかけて、良い順に並べる
+function mcRank(A, mc) {
+  if (!mc || !mc.res || !mc.res.length) return null;
+  return mc.res.map(x => ({ ...x, mean: x.mean + tadj(A.moves.find(m => m.i === x.i)) })).sort((a, b) => b.mean - a.mean);
+}
+// A：形の評価（理由づけ用）、mc：試し打ちの結果（目数で厳密に比べる）
+function judgeMove(A, i, mc) {
+  const ms = A.moves, has = (mv, k) => mv && mv.tags.some(t => t.k === k);
+  const m = ms.find(x => x.i === i) || { i, tags: [], score: 0 };
+  let r, best, loss = null, win = null, isBest;
+  const res = mcRank(A, mc);
+  const mine = res && res.find(x => x.i === i);
+  const mcOf = j => res && res.find(x => x.i === j);
+  if (res && mine) {
+    const top = res[0];
+    loss = Math.max(0, top.mean - mine.mean);
+    win = mine.win;
+    isBest = top.i === i || loss < 0.5;
+    best = ms.find(x => x.i === top.i) || { i: top.i, tags: [] };
+    r = isBest || loss <= 1.2 ? 0 : loss <= 3 ? 1 : loss <= 7 ? 2 : 3;
+  } else {
+    best = ms[0];
+    const diff = best.score - m.score;
+    isBest = best.i === i;
+    r = isBest || diff <= 1 ? 0 : diff <= 4 ? 1 : diff <= 9 ? 2 : 3;
+  }
+  const items = [];
+  for (const t of m.tags) {
+    const x = tagText(t, "player");
+    if (!x || !x.t) continue;
+    if (r === 0 && x.c === "neg" && ["lowlibs", "deep", "edge2"].includes(t.k)) continue;
+    items.push(x);
+  }
+  // 見逃し（試し打ちでも実際に得だったときだけ）
+  const worth = j => !res || !mine || (mcOf(j) && mcOf(j).mean - mine.mean > 1.5);
+  const capMv = ms.find(x => has(x, "capture") || has(x, "caught"));
+  if (capMv && !has(m, "capture") && !has(m, "caught") && worth(capMv.i)) items.push({ c: "neg", t: `${coord(capMv.i)} に打てば相手の石を取れました。` });
+  if (A.ownAtari.length && !has(m, "save") && !has(m, "capture")) {
+    const sv = ms.find(x => has(x, "save"));
+    if (!sv) items.push({ c: "info", t: "アタリの石はシチョウなどで、もう助からない形でした。逃げなかったのは正解です。" });
+    else if (worth(sv.i)) items.push({ c: "neg", t: `あなたの石がアタリでした（${coord(sv.i)} に伸びると助かりました）。` });
+  }
+  if (!items.length) items.push({ c: r <= 1 ? "pos" : "info", t: r <= 1 ? "盤全体を見たバランスのよい手です。" : "悪くはありませんが、もっと価値の大きい場所がありました。" });
+  const label = isBest ? "◎ 最善手！" : RATE[r].label;
+  return { r, items, best, loss, win, isBest, label, showBest: !isBest && (loss !== null ? loss > 3 : r >= 2), n: mine ? mine.n : 0 };
+}
+// ---------- 着手 ----------
+function applyMove(r, i, c) {
+  S.b = r.b; S.ko = r.ko; S.caps[c] += r.captured.length; S.last = i;
+  S.moveNum++; S.turn = 3 - c; S.passes = 0; S.seen.add(S.b.join(""));
+  S.hints = []; S.lastMover = c;
+}
+
+function afterMyAction() {
+  // 手番を相手に渡したあとの共通処理
+  if (S.passes >= 2) { startScoring(); return; }
+  if (mode === "npc") npcTurn();
+  else if (mode === "local") { player = S.turn; render(); renderSitu(); renderLog(); }
+  else { sendMyChange(); render(); renderSitu(); renderLog(); }
+}
+
+function nextLine() {
+  if (mode === "npc") return `<div class="npc" id="npcline">NPCが考えています…</div>`;
+  if (mode === "local") return `<div class="npc">次は <b>${NAME[S.turn]}</b> の番です。端末を交代しましょう。</div>`;
+  return `<div class="npc" id="npcline">相手の番です。相手が打つのを待っています…</div>`;
+}
+
+// ---------- 試し打ち（Web Worker） ----------
+let MC = null, mcSeq = 0;
+const mcWait = {};
+try {
+  MC = new Worker(URL.createObjectURL(new Blob([document.getElementById("mcsrc").textContent], { type: "text/javascript" })));
+  MC.onmessage = e => { const f = mcWait[e.data.id]; delete mcWait[e.data.id]; if (f) f(e.data); };
+  MC.onerror = () => { MC = null; for (const k in mcWait) { mcWait[k](null); delete mcWait[k]; } };
+} catch (e) { MC = null; }
+function mcBudget() { return N === 9 ? 1000 : 1800; }
+function mcEval(b, toMove, ko, cands, keep) {
+  return new Promise(res => {
+    if (!MC) return res(null);
+    const id = ++mcSeq;
+    mcWait[id] = res;
+    MC.postMessage({ id, N, board: Array.from(b), toMove, ko, cands, keep, budget: mcBudget(), komi: 6.5 });
+    setTimeout(() => { if (mcWait[id]) { delete mcWait[id]; res(null); } }, mcBudget() + 5000);
+  });
+}
+function candList(A, extra) {
+  const out = [];
+  for (const m of A.moves) { if (out.length >= 10) break; out.push(m.i); }
+  // 取る手・助ける手・シチョウの手は必ず比べる
+  for (const m of A.moves) if (m.tags.some(t => ["capture", "save", "caught"].includes(t.k)) && !out.includes(m.i)) out.push(m.i);
+  for (const e of extra) if (!out.includes(e)) out.push(e);
+  return out;
+}
+function setLead(mean, mover, n) { if (mean == null) return; S.mcLead = { n, v: mover === 1 ? mean : -mean }; }
+const THINK_ = () => `<div class="fb-head"><span class="badge rn">評価中…</span></div><p class="small">盤面を何千回も試し打ちして、この手の得・損を計算しています（約${N === 9 ? 1 : 2}秒）。</p>`;
+
+function feedbackHtml(J, me, mvText) {
+  let html = `<div class="fb-head"><span class="badge ${RATE[J.r].cls}">${J.label}</span><span class="fb-mv">${mode === "local" ? NAME[me] : `あなた（${NAME[me]}）`}：${mvText}</span></div>
+    <ul class="reasons">${J.items.map(x => `<li class="${x.c}">${x.t}</li>`).join("")}</ul>`;
+  if (J.showBest) html += `<p class="better">💡 おすすめは <b>${J.best.i < 0 ? "パス" : coord(J.best.i)}</b> でした${J.best.i >= 0 ? "（盤上の緑の印）" : ""}。理由：${J.best.tags && J.best.tags.length ? bestReason(J.best) : "試し打ちの結果、いちばん得をする手でした"}。</p>`;
+  if (J.loss !== null) html += `<p class="small" style="margin:6px 0 0">最善手との差：<b>${J.loss < 0.5 ? "ほぼなし" : `約${J.loss.toFixed(1)}目の損`}</b> ・ この手のあとの${mode === "local" ? NAME[me] + "の" : ""}推定勝率：<b>${Math.round(J.win * 100)}%</b>（${J.n.toLocaleString()}回の試し打ち）</p>`;
+  return html;
+}
+
+async function playerMove(i) {
+  const A = analyzeMoves(S.b, player, S.ko);
+  const before = { b: S.b, ko: S.ko };
+  const r = play(S.b, i, player, S.ko);
+  if (r.err) {
+    if (r.err === "ko") flash("コウです：取られた直後はすぐに取り返せません。他の場所に1手打ってからにしましょう。");
+    else if (r.err === "suicide") flash("そこは着手禁止点です。打つと自分の石の呼吸点がなくなってしまいます。");
+    return;
+  }
+  if (mode !== "online") S.undo.push(snapshot());
+  const me = player, S0 = S;
+  applyMove(r, i, me);
+  S.suggest = -1;
+  const entry = { n: S.moveNum, who: me, mv: coord(i) };
+  S.log.push(entry);
+  $("feedback").innerHTML = THINK_() + nextLine();
+  if (mode === "online") sendMyChange(); else busy = true;
+  S.evaluating = true;
+  render(); renderLog();
+  const mc = await mcEval(before.b, me, before.ko, candList(A, [i]), [i]);
+  S0.evaluating = false;
+  if (S !== S0) return;
+  const J = judgeMove(A, i, mc);
+  S.stats[me][J.r]++; entry.r = J.r; entry.label = J.label;
+  if (J.showBest && J.best.i >= 0 && !S.b[J.best.i] && S.moveNum === entry.n) S.suggest = J.best.i;
+  if (mc && mc.res) { const mm = mcRank(A, mc).find(x => x.i === i); if (mm) setLead(mm.mean, me, entry.n); }
+  const keepLine = $("npcline") ? $("npcline").innerHTML : null;
+  $("feedback").innerHTML = feedbackHtml(J, me, coord(i)) + nextLine();
+  if (keepLine && mode === "online" && $("npcline")) $("npcline").innerHTML = keepLine;
+  busy = false;
+  render(); renderLog();
+  if (mode !== "online") afterMyAction(); else renderSitu();
+}
+
+async function playerPass() {
+  if (!canPlay()) return;
+  const A = analyzeMoves(S.b, player, S.ko);
+  const before = { b: S.b, ko: S.ko };
+  if (mode !== "online") S.undo.push(snapshot());
+  const me = player, S0 = S;
+  S.moveNum++; S.passes++; S.turn = 3 - me; S.suggest = -1; S.hints = []; S.last = -1; S.lastMover = me;
+  const entry = { n: S.moveNum, who: me, mv: "パス" };
+  S.log.push(entry);
+  const ending = S.passes >= 2;
+  $("feedback").innerHTML = THINK_() + (ending ? "" : nextLine());
+  if (mode === "online") { if (!ending) sendMyChange(); } else busy = true;
+  S.evaluating = true;
+  render(); renderLog();
+  const mc = await mcEval(before.b, me, before.ko, candList(A, [-1]).slice(0, 8).concat([-1]).filter((v, k, a) => a.indexOf(v) === k), [-1]);
+  S0.evaluating = false;
+  if (S !== S0) return;
+  let r, msg, best = A.moves[0];
+  const res = mcRank(A, mc);
+  const pm = res && res.find(x => x.i === -1);
+  let loss = null;
+  if (res && pm) { loss = Math.max(0, res[0].mean - pm.mean); best = A.moves.find(x => x.i === res[0].i) || best; r = loss <= 1.5 ? 0 : loss <= 4 ? 2 : 3; }
+  else r = best && best.score > 2 ? 2 : 0;
+  if (r === 0) msg = `<li class="pos">打つ価値のある場所はほぼ残っていません。パスで正解です。</li>`;
+  else msg = `<li class="neg">まだ打つ価値のある場所が残っています（例：${coord(best.i)}）。${bestReason(best)}。</li>`;
+  S.stats[me][r]++; entry.r = r;
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge ${RATE[r].cls}">${r === 0 ? "◎" : RATE[r].label.split(" ")[0]} パス</span><span class="fb-mv">${who(me)}：パス</span></div>
+      <ul class="reasons">${msg}</ul>${loss !== null && loss >= 0.5 ? `<p class="small" style="margin:6px 0 0">パスは最善手より約${loss.toFixed(1)}目の損</p>` : ""}` + (ending ? "" : nextLine());
+  busy = false;
+  render(); renderLog();
+  if (mode !== "online") afterMyAction(); else if (ending) startScoring();
+}
+
+function npcTurn() {
+  busy = true; render();
+  const S0 = S;
+  setTimeout(async () => {
+    if (mode !== "npc" || S !== S0) { busy = false; return; }
+    let pick = npcChoose(S.b, npc, S.ko, Math.min(level, 2), S.passes > 0, S.seen);
+    if (pick && level === 3) {
+      // 上級：試し打ちで候補を比べて最も得な手を選ぶ
+      const A = analyzeMoves(S.b, npc, S.ko);
+      const cands = candList(A, []).filter(i => { const r = play(S.b, i, npc, S.ko); return !r.err && !S.seen.has(r.b.join("")); });
+      const mc = cands.length ? await mcEval(S.b, npc, S.ko, cands, []) : null;
+      if (S !== S0) { busy = false; return; }
+      if (mc && mc.res && mc.res.length) {
+        const top = mcRank(A, mc)[0];
+        pick = A.moves.find(x => x.i === top.i) || pick;
+        setLead(top.mean, npc, S.moveNum + 1);
+      }
+    }
+    let line;
+    if (!pick) {
+      S.moveNum++; S.passes++; S.turn = player; S.last = -1; S.lastMover = npc;
+      S.log.push({ n: S.moveNum, who: npc, mv: "パス" });
+      line = `<b>NPC（${NAME[npc]}）はパスしました。</b> ${S.passes >= 2 ? "" : "あなたもパスすると終局です（まだ打ちたい場所があれば打ってOK）。"}`;
+    } else {
+      const r = play(S.b, pick.i, npc, S.ko);
+      applyMove(r, pick.i, npc);
+      S.log.push({ n: S.moveNum, who: npc, mv: coord(pick.i) });
+      const why = pick.tags.map(t => tagText(t, "npc")).filter(x => x && x.t).map(x => x.t);
+      line = `<b>NPC（${NAME[npc]}）：${coord(pick.i)}</b> — ${why.length ? why.join(" ") : "盤のバランスを取る手です。"}`;
+    }
+    busy = false;
+    showOpponentLine(line);
+    if (S.passes >= 2) return startScoring();
+    render(); renderSitu(); renderLog();
+  }, 300);
+}
+
+function showOpponentLine(line) {
+  const el = $("npcline");
+  if (el) el.innerHTML = line;
+  else $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">あなたの番</span></div><div class="npc" style="border:0;margin:0;padding:0">${line}</div>`;
+}
+
+function undo() {
+  if (busy || mode === "online" || !S.undo.length || S.over || S.scoring) return;
+  const s = S.undo.pop();
+  Object.assign(S, s);
+  if (mode === "local") player = S.turn;
+  S.suggest = -1; S.hints = [];
+  while (S.log.length && S.log[S.log.length - 1].n > S.moveNum) S.log.pop();
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">1手戻しました</span></div><ul class="reasons"><li class="info">${mode === "local" ? `${NAME[S.turn]}の番から打ち直します。` : "もう一度考えてみましょう。"}「ヒント」も使えます。</li></ul>`;
+  render(); renderSitu(); renderLog();
+}
+
+async function hint() {
+  if (!canPlay()) return;
+  const A = analyzeMoves(S.b, player, S.ko), S0 = S, mv = S.moveNum;
+  busy = true;
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">ヒントを計算中…</span></div><p class="small">候補手を試し打ちで比べています。</p>`;
+  render();
+  const mc = await mcEval(S.b, player, S.ko, candList(A, []), []);
+  busy = false;
+  if (S !== S0 || S.moveNum !== mv) { render(); return; }
+  let top;
+  if (mc && mc.res && mc.res.length) top = mcRank(A, mc).slice(0, 3).map(x => ({ m: A.moves.find(y => y.i === x.i), win: x.win }));
+  else top = A.moves.slice(0, 3).map(m => ({ m, win: null }));
+  S.hints = top.map(t => t.m.i);
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">ヒント（${NAME[player]}）</span></div>
+    <ul class="reasons">${top.map((t, k) => `<li class="info"><b>${k + 1}. ${coord(t.m.i)}</b>：${bestReason(t.m)}${t.win !== null ? `（推定勝率 ${Math.round(t.win * 100)}%）` : ""}</li>`).join("")}</ul>
+    <p class="small">盤上の番号つきの点が候補手です。</p>`;
+  render();
+}
+
+function resign() {
+  if (busy || S.over || S.scoring || (mode !== "local" && !player)) return;
+  if (!S.resignArm) { S.resignArm = true; render(); setTimeout(() => { if (S) { S.resignArm = false; render(); } }, 3000); return; }
+  const loser = mode === "local" ? S.turn : player;
+  S.over = true; S.result = `${NAME[3 - loser]}の中押し勝ち（${NAME[loser]}が投了）`;
+  showResign();
+  sendMyChange();
+}
+function showResign() {
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge r3">投了</span></div><p class="result">${S.result}</p>${summaryHtml()}`;
+  render(); renderLog();
+}
+
+// ---------- 終局 ----------
+function startScoring(fromRemote) {
+  S.scoring = true; S.suggest = -1; S.hints = [];
+  if (!fromRemote) S.dead = guessDead(S.b);
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">終局</span></div>
+    <ul class="reasons"><li class="info">両者がパスしたので終局です。</li>
+    <li class="info">取られる運命の「死に石」を自動で推定し、半透明で表示しています。違っていたら石をクリックして切り替えてください。${mode === "online" ? "（相手の画面にも反映されます）" : ""}</li>
+    <li class="info">よければ「結果を確定」を押しましょう。</li></ul>`;
+  render(); renderLog();
+  if (!fromRemote) sendMyChange();
+}
+
+function finishScoring(fromRemote) {
+  const sc = computeScore(S.b, S.dead);
+  const w = sc.white + 6.5, b = sc.black, d = Math.abs(w - b);
+  const winner = b > w ? 1 : 2;
+  S.over = true; S.scoring = false; S.final = true;
+  S.result = `${NAME[winner]}の${d}目勝ち`;
+  let badge;
+  if (mode === "local") badge = `<span class="badge r0">${NAME[winner]}の勝ち！</span>`;
+  else if (!player) badge = `<span class="badge rn">${NAME[winner]}の勝ち</span>`;
+  else badge = winner === player ? `<span class="badge r0">あなたの勝ち！</span>` : `<span class="badge r3">${mode === "npc" ? "NPC" : "相手"}の勝ち</span>`;
+  $("feedback").innerHTML = `<div class="fb-head">${badge}</div>
+    <p class="result">${S.result}</p>
+    <p class="small">黒 ${b}（石＋地） ／ 白 ${sc.white} ＋ コミ 6.5 ＝ ${w}</p>${summaryHtml()}`;
+  render(); renderLog();
+  if (!fromRemote) sendMyChange();
+}
+
+function summaryHtml() {
+  const colors = mode === "local" ? [1, 2] : player ? [player] : [];
+  return colors.map(c => {
+    const st = S.stats[c], t = st.reduce((a, b) => a + b, 0);
+    if (!t) return "";
+    const g = Math.round((st[0] + st[1]) / t * 100);
+    const name = mode === "local" ? NAME[c] : "あなた";
+    return `<p style="margin:8px 0 0;font-size:14px">${name}の${t}手のうち、好手・良い手は <b>${g}%</b> でした。${g >= 70 ? "とてもいい内容です！" : g >= 45 ? "いい調子です。疑問手の解説を読み返してみましょう。" : "まずは「アタリ」と「石を取る」を意識してみましょう。"}</p>`;
+  }).join("");
+}
+
+// ---------- オンライン対戦（PeerJS：ログイン不要・端末どうしを直接つなぐ） ----------
+const PREFIX = "igo-hajimete-v1-";
+let ROOM = typeof Peer === "function" ? true : null;
+let NR = null, ON = { epoch: 0 }, syncTimer = null, joinWait = null;
+function others() {
+  if (!NR) return [];
+  return NR.host ? NR.conns.filter(c => c.open && c.seat) : (NR.hostConn && NR.hostConn.open ? [NR.hostConn] : []);
+}
+function setOnlineMsg(t) { $("onlinemsg").innerHTML = t; }
+function newEpoch() { return Date.now() * 1000 + Math.floor(Math.random() * 1000); }
+function sendTo(conn, obj) { try { if (conn && conn.open) conn.send(obj); } catch (e) {} }
+function broadcast(obj, except) {
+  if (!NR) return;
+  if (NR.host) NR.conns.forEach(c => { if (c !== except) sendTo(c, obj); });
+  else sendTo(NR.hostConn, obj);
+}
+function readCode() { return ($("code").value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20); }
+
+async function joinOnline() {
+  const code = readCode();
+  // すでに同じ部屋で対局中なら、新しい対局を始める（色はそのまま）
+  if (NR && ON.code === code && ON.epoch && player) { newRound(); return; }
+  if (!code) { setOnlineMsg(`<span class="warn">合言葉（英数字）を入力してください。</span>`); return; }
+  if (!ROOM) { setOnlineMsg(`<span class="warn">通信の部品を読み込めませんでした。インターネットにつながっているか確認して、ページを再読み込みしてください。</span>`); return; }
+  await leaveOnline();
+  mode = "online";
+  ON = { code, epoch: 0, seq: 0, hostColor: 0 };
+  startGame(+$("size").value, +$("color").value);
+  player = 0;
+  setOnlineMsg("接続中…");
+  render();
+  tryHost(code, 0);
+  syncTimer = setInterval(() => { if (ON.epoch) pushState(); }, 5000);
+}
+
+// 合言葉の部屋を作ってみる。すでにあれば参加する
+function tryHost(code, tries) {
+  const peer = new Peer(PREFIX + code, { debug: 0 });
+  const me = { peer, host: false, conns: [], hostConn: null, mySeat: undefined };
+  NR = me;
+  peer.on("open", () => {
+    if (NR !== me) return;
+    me.host = true;
+    becomeHost();
+  });
+  peer.on("connection", conn => {
+    if (NR !== me || !me.host) { try { conn.close(); } catch (e) {} return; }
+    setupHostConn(conn);
+  });
+  peer.on("error", err => {
+    if (NR !== me) return;
+    if (err.type === "unavailable-id") { peer.destroy(); joinAsGuest(code, tries); }
+    else if (err.type === "network" || err.type === "server-error" || err.type === "socket-error" || err.type === "socket-closed")
+      setOnlineMsg(`<span class="warn">接続サーバーにつながりません。しばらくしてからもう一度お試しください。</span>`);
+    else if (err.type === "browser-incompatible") setOnlineMsg(`<span class="warn">このブラウザはオンライン対戦に対応していません。最新の Chrome・Safari などでお試しください。</span>`);
+  });
+  peer.on("disconnected", () => { if (NR === me && !peer.destroyed) { try { peer.reconnect(); } catch (e) {} } });
+}
+
+function joinAsGuest(code, tries) {
+  const peer = new Peer({ debug: 0 });
+  const me = { peer, host: false, conns: [], hostConn: null, mySeat: undefined };
+  NR = me;
+  setOnlineMsg(`部屋「<b>${code}</b>」に参加しています…`);
+  peer.on("open", () => {
+    if (NR !== me) return;
+    const conn = peer.connect(PREFIX + code, { reliable: true });
+    me.hostConn = conn;
+    conn.on("open", () => { if (NR === me) sendTo(conn, { t: "sync" }); });
+    conn.on("data", m => { if (NR === me) onMsg(m, conn); });
+    conn.on("close", () => {
+      if (NR !== me) return;
+      setOnlineMsg(`<span class="warn">部屋を作った人との接続が切れました。もう一度「部屋に入る／作る」を押してください。</span>`);
+      showOpponentLine(`<b>相手との接続が切れました。</b>`);
+      ON.epoch = 0; render();
+    });
+    // 一定時間つながらなければ、もう一度試す
+    joinWait = setTimeout(() => { if (NR === me && !ON.epoch) retry(code, tries); }, 8000);
+  });
+  peer.on("error", err => {
+    if (NR !== me) return;
+    // 部屋の持ち主がいなくなっていた → こちらが部屋を作り直す
+    if (err.type === "peer-unavailable") retry(code, tries);
+    else setOnlineMsg(`<span class="warn">接続できませんでした（${err.type}）。もう一度お試しください。</span>`);
+  });
+}
+
+function retry(code, tries) {
+  if (NR && NR.peer) NR.peer.destroy();
+  NR = null;
+  if (tries >= 3) { setOnlineMsg(`<span class="warn">部屋につながりませんでした。少し待ってから、もう一度「部屋に入る／作る」を押してください。</span>`); render(); return; }
+  setOnlineMsg("もう一度つないでいます…");
+  setTimeout(() => { if (mode === "online" && ON.code === code && !NR) tryHost(code, tries + 1); }, 1500);
+}
+
+function setupHostConn(conn) {
+  NR.conns.push(conn);
+  conn.on("open", () => {
+    const guest = 3 - ON.hostColor;
+    const taken = NR.conns.some(c => c !== conn && c.open && c.seat === guest);
+    conn.seat = taken ? 0 : guest;
+    sendTo(conn, { t: "seat", seat: conn.seat });
+    sendTo(conn, { t: "state", d: packState() });
+    if (conn.seat) {
+      setOnlineMsg(`部屋「<b>${ON.code}</b>」で対局中。あなたは<b>${NAME[player]}</b>です。`);
+      showOpponentLine(`<b>相手が入りました。</b>${S.turn === player ? "あなたの番です。" : "相手の番です。"}`);
+    }
+    render();
+  });
+  conn.on("data", m => onMsg(m, conn));
+  conn.on("close", () => {
+    if (!NR) return;
+    NR.conns = NR.conns.filter(c => c !== conn);
+    if (conn.seat) {
+      showOpponentLine(`<b>相手が退出しました。</b>同じ合言葉で入り直すと続きから打てます。`);
+      setOnlineMsg(`部屋「<b>${ON.code}</b>」で相手を待っています。`);
+    }
+    render();
+  });
+}
+
+function onMsg(m, conn) {
+  if (!m || typeof m !== "object") return;
+  if (m.t === "seat" && NR && !NR.host) {
+    NR.mySeat = [0, 1, 2].includes(m.seat) ? m.seat : 0;
+  } else if (m.t === "sync" && NR && NR.host) {
+    sendTo(conn, { t: "state", d: packState() });
+  } else if (m.t === "state") {
+    // 対局者以外（観戦者）からの変更は受け付けない
+    if (NR && NR.host && !conn.seat) return;
+    const ok = onRemoteState({ data: m.d });
+    if (ok && NR && NR.host) broadcast({ t: "state", d: m.d }, conn);
+  }
+}
+
+function becomeHost(color) {
+  const c = color || +$("color").value;
+  startGame(+$("size").value, c);
+  player = c;
+  ON.epoch = newEpoch(); ON.seq = 0; ON.hostColor = c;
+  const url = inviteUrl();
+  setOnlineMsg(`部屋「<b>${ON.code}</b>」を作りました。友達に同じ合言葉で入ってもらいましょう。${url ? `<br>招待リンク：<span style="user-select:all">${url}</span>` : ""}`);
+  pushState(); render(); renderSitu();
+}
+
+function newRound() {
+  startGame(+$("size").value, player);
+  ON.epoch = newEpoch(); ON.seq = 0;
+  pushState(); startGameMessage(); render(); renderSitu();
+}
+
+async function leaveOnline() {
+  clearInterval(syncTimer); clearTimeout(joinWait);
+  if (NR && NR.peer) { try { NR.peer.destroy(); } catch (e) {} }
+  NR = null; ON = { epoch: 0 };
+  if ($("onlinemsg")) setOnlineMsg("");
+}
+
+function packState() {
+  return {
+    v: 1, epoch: ON.epoch, seq: ON.seq, size: N, hostColor: ON.hostColor,
+    b: Array.from(S.b).join(""), turn: S.turn, ko: S.ko, caps: [S.caps[1], S.caps[2]], last: S.last,
+    passes: S.passes, moveNum: S.moveNum, over: S.over, result: S.result || "", scoring: S.scoring,
+    final: !!S.final, dead: [...S.dead], lastMover: S.lastMover || 0,
+  };
+}
+// いまの状態をそのまま送る（取りこぼし対策）
+function pushState() {
+  if (!NR || !ON.epoch || !S) return;
+  broadcast({ t: "state", d: packState() });
+}
+// 自分の操作で状態が変わったときに呼ぶ
+function sendMyChange() { if (mode === "online" && NR && ON.epoch) { ON.seq++; pushState(); } }
+
+function validState(d) {
+  if (!d || d.v !== 1 || (d.size !== 9 && d.size !== 13)) return false;
+  if (typeof d.b !== "string" || d.b.length !== d.size * d.size || !/^[012]+$/.test(d.b)) return false;
+  if (![1, 2].includes(d.turn) || ![1, 2].includes(d.hostColor)) return false;
+  if (typeof d.epoch !== "number" || typeof d.seq !== "number") return false;
+  if (!Array.isArray(d.dead) || !Array.isArray(d.caps)) return false;
+  return true;
+}
+
+// 受け取った状態を反映。反映したら true
+function onRemoteState(msg) {
+  if (!S) return false;
+  const d = msg.data;
+  if (!validState(d)) return false;
+  const isNew = d.epoch !== ON.epoch;
+  if (isNew && ON.epoch && d.epoch < ON.epoch) return false;
+  if (!isNew && d.seq <= ON.seq) return false;
+  clearTimeout(joinWait);
+  const prev = { b: S.b, ko: S.ko, scoring: S.scoring, over: S.over, moveNum: S.moveNum };
+  if (isNew) {
+    if (NR && NR.host) player = d.hostColor;
+    else player = NR && NR.mySeat !== undefined ? NR.mySeat : 3 - d.hostColor;
+    setup(d.size);
+    S.stats = { 1: [0, 0, 0, 0], 2: [0, 0, 0, 0] }; S.log = []; S.seen = new Set();
+    setOnlineMsg(player ? `部屋「<b>${ON.code}</b>」で対局中。あなたは<b>${NAME[player]}</b>です。` : `部屋「<b>${ON.code}</b>」を観戦中です（2人がすでに対局しています）。`);
+  }
+  ON.epoch = d.epoch; ON.seq = d.seq; ON.hostColor = d.hostColor;
+  S.b = Int8Array.from(d.b, ch => +ch);
+  S.turn = d.turn; S.ko = Number.isInteger(d.ko) ? d.ko : -1; S.caps = { 1: +d.caps[0] || 0, 2: +d.caps[1] || 0 };
+  S.last = Number.isInteger(d.last) ? d.last : -1; S.passes = +d.passes || 0; S.moveNum = +d.moveNum || 0;
+  S.over = !!d.over; S.result = String(d.result || "").slice(0, 80); S.scoring = !!d.scoring;
+  S.dead = new Set(d.dead.filter(x => Number.isInteger(x) && x >= 0 && x < N * N));
+  S.lastMover = d.lastMover; S.seen.add(d.b); S.suggest = -1; S.hints = []; S.final = !!d.final;
+  busy = false;
+
+  if (isNew) startGameMessage();
+  else if (S.moveNum > prev.moveNum && d.lastMover && d.lastMover !== player) {
+    const mover = d.lastMover;
+    let line;
+    if (S.last >= 0 && prev.b.length === S.b.length) {
+      const A = analyzeMoves(prev.b, mover, prev.ko);
+      const m = A.moves.find(x => x.i === S.last);
+      const why = m ? m.tags.map(t => tagText(t, "npc")).filter(x => x && x.t).map(x => x.t) : [];
+      line = `<b>${player ? "相手" : NAME[mover]}（${NAME[mover]}）：${coord(S.last)}</b> — ${why.length ? why.join(" ") : "盤のバランスを取る手です。"}`;
+      S.log.push({ n: S.moveNum, who: mover, mv: coord(S.last) });
+    } else {
+      line = `<b>${player ? "相手" : NAME[mover]}（${NAME[mover]}）はパスしました。</b>${S.passes === 1 && player ? " あなたもパスすると終局です。" : ""}`;
+      S.log.push({ n: S.moveNum, who: mover, mv: "パス" });
+    }
+    showOpponentLine(line);
+  }
+  if (S.over && !prev.over) { if (S.final) finishScoring(true); else showResign(); }
+  else if (S.scoring && !prev.scoring) startScoring(true);
+  render(); renderSitu(); renderLog();
+  return true;
+}
+
+function startGameMessage() {
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">対局開始</span><span class="fb-mv">${N}路盤・オンライン対戦</span></div>
+    <ul class="reasons"><li class="info">${player ? `あなたは <b>${NAME[player]}</b> です。${player === 1 ? "先に打ちましょう。" : "相手（黒）が先に打ちます。"}` : "観戦中です。"}</li>
+    <li class="info">自分が打った手には、ここに評価と理由が出ます。相手の手にも説明がつきます。</li></ul>`;
+}
+
+// 招待リンク（?room=合言葉 つき）
+function inviteUrl() {
+  if (!/^https?:$/.test(location.protocol) || !ON.code) return "";
+  return location.origin + location.pathname + "?room=" + encodeURIComponent(ON.code);
+}
+// ---------- 表示 ----------
+let flashTimer = null;
+function flash(msg) {
+  S.flash = msg; render();
+  clearTimeout(flashTimer); flashTimer = setTimeout(() => { S.flash = null; render(); }, 3200);
+}
+
+function renderSitu() {
+  if (!S) return;
+  const out = [];
+  if (!S.over && !S.scoring && player && S.turn === player) {
+    for (const g of allGroups(S.b)) {
+      if (g.libs.size !== 1) continue;
+      const lib = coord([...g.libs][0]);
+      if (g.color === player) out.push(`<p class="warn">注意！ ${mode === "local" ? NAME[player] : "あなた"}の石（${g.stones.length}子）がアタリです。${lib} を相手に打たれると取られます。</p>`);
+      else if ((r => !r.err && !S.seen.has(r.b.join("")))(play(S.b, [...g.libs][0], player, S.ko))) out.push(`<p class="chance">チャンス！ 相手の石（${g.stones.length}子）がアタリです。${lib} に打てば取れます。</p>`);
+    }
+  }
+  let lead, src = "形からの目安";
+  if (S.mcLead && (S.mcLead.n === S.moveNum || S.mcLead.n === S.moveNum - 1)) { lead = S.mcLead.v; src = "試し打ちによる推定"; }
+  else lead = estimate(S.b).sc - 6.5; // 黒から見た差
+  const total = N * N;
+  const blackPct = Math.max(3, Math.min(97, 50 + (lead / total) * 100 * 1.6));
+  const leader = lead > 0 ? "黒" : "白";
+  out.push(`<p style="margin-top:8px"><b>形勢</b>（コミ込み・${src}）：${Math.abs(lead) < 2 ? "ほぼ互角" : `${leader}が約${Math.round(Math.abs(lead))}目リード`}</p>
+    <div class="meter"><i style="width:${blackPct}%"></i></div><div class="meter-l"><span>黒</span><span>白</span></div>`);
+  $("situ").innerHTML = `<h3>いまの局面</h3>${out.join("")}`;
+}
+
+function renderLog() {
+  const row = c => RATE.map((r, k) => `<span class="${r.cls}">${r.label.split(" ")[1]} ${S.stats[c][k]}</span>`).join("");
+  $("stats").innerHTML = mode === "local"
+    ? `<div style="width:100%"><b>黒</b> ${row(1)}</div><div style="width:100%"><b>白</b> ${row(2)}</div>`
+    : player ? row(player) : `<span style="color:var(--muted)">観戦中</span>`;
+  $("log").innerHTML = S.log.slice().reverse().map(l =>
+    `<li><span class="n">${l.n}</span><span class="dot ${l.who === 1 ? "b" : "w"}" style="margin-top:4px"></span><span>${who(l.who)} ${l.mv}</span>${l.r !== undefined ? `<span style="margin-left:auto;color:var(--${["great", "good", "ok", "bad"][l.r]});font-weight:700">${(l.label || RATE[l.r].label).split(" ")[0]}</span>` : ""}</li>`
+  ).join("");
+}
+
+function px(i) { return [PAD + (i % N) * CELL, PAD + ((i / N) | 0) * CELL]; }
+
+function render() {
+  if (!S) return;
+  const W = PAD * 2 + (N - 1) * CELL;
+  const svg = $("board");
+  svg.setAttribute("viewBox", `0 0 ${W} ${W}`);
+  let h = `<defs>
+    <radialGradient id="gb" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#6a6560"/><stop offset=".45" stop-color="#262321"/><stop offset="1" stop-color="#0c0b0a"/></radialGradient>
+    <radialGradient id="gw" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#ece8e0"/><stop offset="1" stop-color="#c9c3b8"/></radialGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ebcd92"/><stop offset=".5" stop-color="#dfb874"/><stop offset="1" stop-color="#d2a75e"/></linearGradient>
+  </defs>
+  <rect width="${W}" height="${W}" rx="10" fill="url(#wood)"/>`;
+  const end = PAD + (N - 1) * CELL;
+  for (let k = 0; k < N; k++) {
+    const p = PAD + k * CELL;
+    h += `<line x1="${PAD}" y1="${p}" x2="${end}" y2="${p}" stroke="var(--grid)" stroke-width="${k === 0 || k === N - 1 ? 1.6 : 1}"/>`;
+    h += `<line x1="${p}" y1="${PAD}" x2="${p}" y2="${end}" stroke="var(--grid)" stroke-width="${k === 0 || k === N - 1 ? 1.6 : 1}"/>`;
+    h += `<text x="${p}" y="${W - 9}" font-size="12" text-anchor="middle" fill="#6b5232">${COLS[k]}</text>`;
+    h += `<text x="12" y="${p + 4}" font-size="12" text-anchor="middle" fill="#6b5232">${N - k}</text>`;
+  }
+  const stars = N === 9 ? [2, 6] : [3, 9];
+  const sp = [...stars.flatMap(a => stars.map(b => [a, b])), [(N - 1) / 2, (N - 1) / 2]];
+  for (const [x, y] of sp) h += `<circle cx="${PAD + x * CELL}" cy="${PAD + y * CELL}" r="3.6" fill="var(--grid)"/>`;
+
+  // 地の表示（終局時）
+  const showScore = S.scoring || (S.over && S.final);
+  const owner = showScore ? computeScore(S.b, S.dead).owner : null;
+  if (owner) for (let i = 0; i < N * N; i++) {
+    if (!owner[i] || (S.b[i] && !S.dead.has(i))) continue;
+    const [x, y] = px(i);
+    h += `<rect x="${x - 7}" y="${y - 7}" width="14" height="14" rx="2" fill="${owner[i] === 1 ? "#1e1b19" : "#fff"}" stroke="#0005" stroke-width=".8" opacity=".85"/>`;
+  }
+  // 陣地の目安（対局中）
+  let areaB = 0, areaW = 0;
+  if (!showScore) {
+    const E = estimate(S.b);
+    for (let i = 0; i < N * N; i++) {
+      if (S.b[i]) { if (S.b[i] === 1) areaB++; else areaW++; continue; }
+      const o = E.inf[i] >= 2 ? 1 : E.inf[i] <= -2 ? 2 : 0;
+      if (o === 1) areaB++; else if (o === 2) areaW++;
+      if (!o || !showArea) continue;
+      const [x, y] = px(i);
+      h += `<rect x="${x - CELL / 2}" y="${y - CELL / 2}" width="${CELL}" height="${CELL}" fill="${o === 1 ? "#1e1b19" : "#ffffff"}" opacity="${o === 1 ? 0.22 : 0.45}"/>`;
+      h += `<rect x="${x - 6}" y="${y - 6}" width="12" height="12" rx="2" fill="${o === 1 ? "#1e1b19" : "#fff"}" stroke="#0005" stroke-width=".8" opacity=".8"/>`;
+    }
+  }
+  // 石
+  const R = CELL * 0.47;
+  for (let i = 0; i < N * N; i++) {
+    if (!S.b[i]) continue;
+    const [x, y] = px(i), dead = showScore && S.dead.has(i);
+    h += `<circle cx="${x + 1}" cy="${y + 2}" r="${R}" fill="#0003"${dead ? ' opacity=".3"' : ""}/>`;
+    h += `<circle cx="${x}" cy="${y}" r="${R}" fill="url(#${S.b[i] === 1 ? "gb" : "gw"})"${dead ? ' opacity=".4"' : ""}/>`;
+  }
+  // 最終手
+  if (S.last >= 0 && S.b[S.last] && !showScore) {
+    const [x, y] = px(S.last);
+    h += `<circle cx="${x}" cy="${y}" r="${R * 0.38}" fill="none" stroke="${S.b[S.last] === 1 ? "#fff" : "#222"}" stroke-width="2.2"/>`;
+  }
+  // おすすめ
+  if (S.suggest >= 0 && !S.b[S.suggest]) {
+    const [x, y] = px(S.suggest);
+    h += `<circle cx="${x}" cy="${y}" r="${R * 0.75}" fill="#1f6b4a33" stroke="#1f6b4a" stroke-width="2.4" stroke-dasharray="4 3"/>`;
+    h += `<text x="${x}" y="${y + 5}" font-size="14" font-weight="700" text-anchor="middle" fill="#1f6b4a">★</text>`;
+  }
+  S.hints.forEach((i, k) => {
+    if (S.b[i]) return;
+    const [x, y] = px(i);
+    h += `<circle cx="${x}" cy="${y}" r="${R * 0.62}" fill="#2f5d8a" opacity=".88"/><text x="${x}" y="${y + 5}" font-size="14" font-weight="700" text-anchor="middle" fill="#fff">${k + 1}</text>`;
+  });
+  // ホバー
+  const hv = S.hover;
+  let statusExtra = "";
+  if (hv >= 0 && !S.over) {
+    if (S.b[hv]) {
+      const g = getGroup(S.b, hv);
+      for (const l of g.libs) { const [x, y] = px(l); h += `<circle cx="${x}" cy="${y}" r="5.5" fill="#2f7fd0" stroke="#fff" stroke-width="1.5"/>`; }
+      statusExtra = `（このグループの呼吸点：${g.libs.size}${g.libs.size === 1 ? "・アタリ！" : ""}）`;
+    } else if (canPlay()) {
+      const [x, y] = px(hv);
+      h += `<circle cx="${x}" cy="${y}" r="${R}" fill="url(#${player === 1 ? "gb" : "gw"})" opacity=".45"/>`;
+    }
+  }
+  svg.innerHTML = h;
+
+  // ステータス
+  let st;
+  if (S.over) st = `対局終了：${S.result}`;
+  else if (S.scoring) {
+    const sc = computeScore(S.b, S.dead);
+    st = `終局の確認中 ― 黒 ${sc.black} ／ 白 ${sc.white}＋6.5`;
+  } else if (mode === "online" && !ON.epoch) st = NR ? "相手を探しています…" : "オンライン対戦の準備中…";
+  else if (S.evaluating && mode !== "online") st = "あなたの手を評価しています…";
+  else if (busy) st = mode === "npc" && S.turn === npc ? `<span class="dot ${npc === 1 ? "b" : "w"}"></span>NPCが考えています…` : "手を評価しています…";
+  else {
+    const dot = `<span class="dot ${S.turn === 1 ? "b" : "w"}"></span>`;
+    if (mode === "local") st = `${dot}${NAME[S.turn]}の番です`;
+    else if (mode === "online" && !others().length) st = `${dot}相手の参加を待っています（合言葉：${ON.code}）`;
+    else if (S.turn === player) st = `${dot}あなたの番です（${NAME[player]}）`;
+    else if (player) st = `${dot}相手（${NAME[S.turn]}）の番です`;
+    else st = `${dot}観戦中 ― ${NAME[S.turn]}の番`;
+  }
+  if (S.flash) st = `<span class="warn">${S.flash}</span>`;
+  $("status").innerHTML = st + (statusExtra ? `<span style="font-weight:400;color:var(--muted)">${statusExtra}</span>` : "");
+
+  // ボタン
+  const B = $("btns");
+  const area = `<button class="${showArea ? "on" : ""}" onclick="toggleArea()">${showArea ? "陣地を隠す" : "陣地を見る"}</button>`;
+  if (S.scoring) B.innerHTML = player || mode === "local" ? `<button class="primary" onclick="finishScoring()">結果を確定</button>${mode === "online" ? "" : `<button onclick="resumePlay()">対局に戻る</button>`}` : "";
+  else if (S.over) B.innerHTML = player || mode === "local" ? `<button class="primary" onclick="newGame()">もう一局</button>` : "";
+  else {
+    const dis = canPlay() ? "" : "disabled";
+    B.innerHTML = `<button onclick="playerPass()" ${dis}>パス</button>${mode === "online" ? "" : `<button onclick="undo()" ${busy || !S.undo.length ? "disabled" : ""}>1手戻す</button>`}<button onclick="hint()" ${dis}>ヒント</button>${area}${player || mode === "local" ? `<button class="danger" onclick="resign()" ${busy || (mode === "online" && !ON.epoch) ? "disabled" : ""}>${S.resignArm ? (mode === "local" ? `${NAME[S.turn]}が投了する？` : "本当に投了する？") : "投了"}</button>` : ""}`;
+  }
+  if (showScore) {
+    const sc = computeScore(S.b, S.dead);
+    $("legend").innerHTML = `<span><i style="background:#1e1b19"></i>黒の領域 ${sc.black}</span><span><i style="background:#fff"></i>白の領域 ${sc.white}（＋コミ6.5）</span>`;
+  } else if (showArea) {
+    $("legend").innerHTML = `<span><i style="background:#1e1b19"></i>黒の領域（目安） ${areaB}</span><span><i style="background:#fff"></i>白の領域（目安） ${areaW}</span><span>どちらでもない点は空白</span>`;
+  } else $("legend").innerHTML = "";
+  if (typeof renderSettings === "function" && $("copyinvite")) renderSettings();
+  $("caps").textContent = `取った石（アゲハマ）：黒 ${S.caps[1]} ／ 白 ${S.caps[2]}　・　${S.moveNum}手目`;
+}
+
+function resumePlay() {
+  S.scoring = false; S.passes = 0; S.dead = new Set();
+  if (mode === "npc") S.turn = player; else player = S.turn;
+  $("feedback").innerHTML = `<div class="fb-head"><span class="badge rn">対局再開</span></div><ul class="reasons"><li class="info">${mode === "local" ? NAME[S.turn] : "あなた"}の番から続けます。</li></ul>`;
+  render(); renderSitu();
+}
+
+function pointFromEvent(e) {
+  const svg = $("board"), rect = svg.getBoundingClientRect();
+  const W = PAD * 2 + (N - 1) * CELL, k = W / rect.width;
+  const x = (e.clientX - rect.left) * k, y = (e.clientY - rect.top) * k;
+  const gx = Math.round((x - PAD) / CELL), gy = Math.round((y - PAD) / CELL);
+  if (gx < 0 || gy < 0 || gx >= N || gy >= N) return -1;
+  if (Math.hypot(x - (PAD + gx * CELL), y - (PAD + gy * CELL)) > CELL * 0.55) return -1;
+  return gy * N + gx;
+}
+
+$("board").addEventListener("pointermove", e => {
+  if (!S) return;
+  const i = pointFromEvent(e);
+  if (i !== S.hover) { S.hover = i; render(); }
+});
+$("board").addEventListener("pointerleave", () => { if (S && S.hover !== -1) { S.hover = -1; render(); } });
+$("board").addEventListener("click", e => {
+  if (!S) return;
+  const i = pointFromEvent(e);
+  if (i < 0) return;
+  if (S.scoring) {
+    if (!S.b[i] || (mode === "online" && !player)) return;
+    const g = getGroup(S.b, i);
+    const isDead = S.dead.has(i);
+    g.stones.forEach(s => isDead ? S.dead.delete(s) : S.dead.add(s));
+    sendMyChange();
+    render(); return;
+  }
+  if (!canPlay() || S.b[i]) return;
+  S.hover = -1;
+  playerMove(i);
+});
+// ---------- 設定欄 ----------
+function renderSettings() {
+  const m = $("mode").value;
+  $("levelwrap").style.display = m === "npc" ? "" : "none";
+  $("colorwrap").style.display = m === "local" ? "none" : "";
+  $("onlinerow").style.display = m === "online" ? "" : "none";
+  $("newgame").textContent = m === "online" ? (NR && ON.epoch ? "この部屋で新しい対局" : "部屋に入る／作る") : "新しい対局をはじめる";
+  $("leave").style.display = NR ? "" : "none";
+  $("onlinenote").innerHTML = !ROOM
+    ? `<span class="warn">通信の部品を読み込めませんでした。インターネットにつながっているか確認して、再読み込みしてください。</span>`
+    : `ログイン不要。同じ合言葉を入れた人同士で対局します。先に入った人が「あなたの石」で選んだ色、あとの人がもう一方の色になります。`;
+  $("copyinvite").style.display = /^https?:$/.test(location.protocol) ? "" : "none";
+}
+$("mode").addEventListener("change", renderSettings);
+$("code").addEventListener("input", renderSettings);
+$("leave").addEventListener("click", async () => { await leaveOnline(); $("mode").value = "npc"; mode = "npc"; renderSettings(); startGame(+$("size").value, +$("color").value); });
+$("newgame").addEventListener("click", async () => { await newGame(); renderSettings(); });
+$("copyinvite").addEventListener("click", async () => {
+  const code = readCode();
+  if (!code) { setOnlineMsg(`<span class="warn">先に合言葉を入れてください。</span>`); return; }
+  const url = location.origin + location.pathname + "?room=" + encodeURIComponent(code);
+  try { await navigator.clipboard.writeText(url); setOnlineMsg(`招待リンクをコピーしました。LINEなどで友達に送ってください。<br><span style="user-select:all">${url}</span>`); }
+  catch (e) { setOnlineMsg(`このリンクを友達に送ってください：<br><span style="user-select:all">${url}</span>`); }
+});
+// 招待リンクから開いたとき
+const invited = new URLSearchParams(location.search).get("room");
+if (invited && /^[a-z0-9]{1,20}$/i.test(invited)) {
+  $("mode").value = "online"; $("code").value = invited.toLowerCase();
+} else $("code").value = Math.random().toString(36).slice(2, 7);
+renderSettings();
+if (invited) {
+  newGame().then(() => renderSettings());
+  const st = document.querySelector(".settings"); if (st && st.scrollIntoView) st.scrollIntoView({ behavior: "smooth", block: "center" });
+} else newGame();
+// オフラインでも開けるように
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+</script>
+</body>
+</html>
